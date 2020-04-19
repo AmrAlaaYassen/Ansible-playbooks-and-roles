@@ -41,7 +41,7 @@
     group: apache
 
 - name: Open httpd port
-  firewall:
+  firewalld:
     service: http
     state: enabled
     immediate: true

@@ -1,0 +1,17 @@
+- name: App tier tasks
+  hosts: webservers
+  become: yes
+  roles:
+   - app-tier
+
+- name: DB tier tasks
+  hosts: db
+  become: yes
+  roles:
+   - db-tier
+
+- name: Load balancer tier tasks
+  hosts: lb
+  become: yes
+  roles:
+   - lb-tier

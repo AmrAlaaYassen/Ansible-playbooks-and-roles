@@ -1,0 +1,4 @@
+haproxy_pkg:
+ - haproxy
+ - firewalld
+haproxy_srv: haproxy
