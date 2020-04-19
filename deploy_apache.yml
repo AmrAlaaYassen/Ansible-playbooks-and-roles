@@ -1,0 +1,18 @@
+---
+- name: Deploy apache server on webservers
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Install Httpd package
+      yum:
+        name: httpd
+        state: latest
+    - name: Enable and start Httpd service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+    - name: Create index.html file for hosting static content
+      copy:
+        content: 'Hoorraaayyy!!! My first playbook ran successfully'
+        dest: /var/www/html/index.html

@@ -1,0 +1,58 @@
+---
+# task files for roles/app-tier
+# installation of packages based on inventory groups
+
+- name: Install Firewalld
+  yum:
+    name: firewalld
+    state: latest
+
+- name: Install httpd
+  yum:
+    name: '{{item}}'
+    state: latest
+  with_items:
+    - '{{httpd_pkg}}'
+
+- name: Start httpd
+  service:
+    name: '{{httpd_srv}}'
+    enabled: true
+    state: started
+
+- name: Copy vhost template file
+  template:
+    src: vhost.conf.j2
+    dest: /etc/httpd/conf.d/vhost.conf
+  notify:
+    - restart_httpd
+
+- name: Create document root
+  file:
+    path: /var/www/vhost
+    state: directory
+
+- name: Copy index.j2 file
+  template:
+    src: index.j2
+    dest: /var/www/vhost/index.php
+    mode: 0644
+    owner: apache
+    group: apache
+
+- name: Open httpd port
+  firewall:
+    service: http
+    state: enabled
+    immediate: true
+    permanent: true
+
+- name: Enabled selinux boolean
+  seboolean:
+    name: '{{ item }}'
+    state: yes
+    persistent: yes
+  loop:
+    - httpd_can_network_connect_db
+    - httpd_can_network_connect
+

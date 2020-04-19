@@ -1,0 +1,39 @@
+---
+- name: Install Apache and start the service
+  hosts: webservers
+  become: yes
+  vars:
+    web_pkg: httpd
+    firewall_pkg: firewalld
+    web_service: httpd
+    firewall_service: firewalld
+    python_pkg: python-httplib2
+    rule: http
+  tasks:
+    - name: Install the required package
+      yum:
+        name:
+          - '{{web_pkg}}'
+          - '{{firewall_pkg}}'
+          - '{{python_pkg}}'
+        state: latest
+    - name: starte and enable {{firewall_service}}
+      service:
+        name: '{{firewall_service}}'
+        state: started
+        enabled: true
+    - name: start and enable {{web_service}}
+      service:
+        name: '{{web_service}}'
+        state: started
+        enabled: true
+    - name: Create web content to be served
+      copy:
+        content: 'Example web content'
+        dest: /var/www/html/index.html
+    - name: Open the port for {{rule}}
+      firewalld:
+        service: '{{rule}}'
+        permanent: true
+        immediate: true
+        state: enabled
