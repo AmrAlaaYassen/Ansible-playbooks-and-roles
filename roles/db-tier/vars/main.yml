@@ -1,0 +1,10 @@
+db:
+ user: root
+ database: userdb
+ password: redhat
+httpd_pkg:
+ - httpd
+ - php
+ - php-mysql
+httpd_srv: httpd
+db_srv: mariadb
