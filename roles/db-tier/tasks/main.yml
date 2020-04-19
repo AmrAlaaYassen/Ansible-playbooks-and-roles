@@ -1,58 +1,62 @@
----
-# task files for roles/app-tier
-# installation of packages based on inventory groups
-
-- name: Install Firewalld
+- name: Install mysql
   yum:
-    name: firewalld
+    name: '{{ item }}'
     state: latest
+  loop:
+    - '{{ db_pkg }}'
 
-- name: Install httpd
-  yum:
-    name: '{{item}}'
-    state: latest
-  with_items:
-    - '{{httpd_pkg}}'
-
-- name: Start httpd
+- name: start mysql
   service:
-    name: '{{httpd_srv}}'
+    name: '{{ db_srv }}'
     enabled: true
     state: started
 
-- name: Copy vhost template file
-  template:
-    src: vhost.conf.j2
-    dest: /etc/httpd/conf.d/vhost.conf
-  notify:
-    - restart_httpd
+- name: Start firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: true
 
-- name: Create document root
-  file:
-    path: /var/www/vhost
-    state: directory
-
-- name: Copy index.j2 file
-  template:
-    src: index.j2
-    dest: /var/www/vhost/index.php
-    mode: 0644
-    owner: apache
-    group: apache
-
-- name: Open httpd port
-  firewall:
-    service: http
+- name: Open mysql port
+  firewalld:
+    service: mysql
     state: enabled
     immediate: true
     permanent: true
 
-- name: Enabled selinux boolean
-  seboolean:
-    name: '{{ item }}'
-    state: yes
-    persistent: yes
-  loop:
-    - httpd_can_network_connect_db
-    - httpd_can_network_connect
+- name: Check if root password is set
+  shell: >
+    mysqladmin -u root status
+  changed_when: false
+  failed_when: false
+  register: root_pwd_check
 
+- name: Setting up mariadb password
+  mysql_user:
+    name: "{{ db['user'] }}"
+    password: "{{ db['password'] }}"
+  when: root_pwd_check.rc == 0
+
+- name: DB users have privileges on all databases
+  mysql_user:
+    name: "{{ db['user'] }}"
+    priv: '*.*:ALL'
+    append_privs: yes
+    password: "{{ db['password'] }}"
+    login_password: "{{ db['password'] }}"
+    host: '{{ item }}'
+  loop:
+    - "{{ inventory_hostname }}"
+    - '%'
+
+- name: Copy database dump file
+  copy:
+    src: "{{ db['backupfile'] }}"
+    dest: /tmp
+
+- name: Restore database
+  mysql_db:
+    name: "{{ db['database'] }}"
+    state: import
+    target: "/tmp/{{ db['backupfile'] }}"
+    login_password: "{{ db['password'] }}"

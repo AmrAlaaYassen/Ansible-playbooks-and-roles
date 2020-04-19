@@ -1,10 +1,11 @@
-db:
- user: root
- database: userdb
- password: redhat
-httpd_pkg:
- - httpd
- - php
- - php-mysql
-httpd_srv: httpd
+db_pkg:
+  - mariadb
+  - mariadb-server
+  - MySQL-python
+  - firewalld
 db_srv: mariadb
+db:
+  user:
+  database:
+  password:
+  backupfile: userdb.backup
